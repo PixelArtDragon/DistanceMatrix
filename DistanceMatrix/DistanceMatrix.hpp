@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <limits>
+#include <algorithm>
+#include <stdexcept>
 
 class DistanceMatrix
 {
@@ -194,6 +196,46 @@ public:
 		std::vector<int> path = get_shortest_path(start, best_neighbor);
 		path.push_back(end);
 		return path;
+	}
+
+
+	//Swaps the indices of the two elements so that adjacencies and distances to element1 now reference element2 and vice versa
+	void swap_vertices(int element1, int element2)
+	{
+		if (element1 < 0 || element1 >= p_num_elements)
+		{
+			throw(std::out_of_range("First element must be valid"));
+		}
+		if (element2 < 0 || element2 >= p_num_elements)
+		{
+			throw(std::out_of_range("Second element must be valid"));
+		}
+		if (element1 == element2)
+		{
+			return;
+		}
+		for (int i = 0; i < p_num_elements; i++)
+		{
+			if (i == element1 || i == element2)
+			{
+				continue;
+			}
+			std::swap(p_calculated_distances[p_get_index(element1, i)], p_calculated_distances[p_get_index(element2, i)]);
+			std::swap(p_defined_distances[p_get_index(element1, i)], p_defined_distances[p_get_index(element2, i)]);
+		}
+		std::vector<int> adjacent_to_element1 = p_adjacency_list[element1];
+		for (int i = 0; i < adjacent_to_element1.size(); i++)
+		{
+			int adjacent_index = adjacent_to_element1[i];
+			std::replace(p_adjacency_list[adjacent_index].begin(), p_adjacency_list[adjacent_index].end(), element1, element2);
+		}
+		std::vector<int> adjacent_to_element2 = p_adjacency_list[element2];
+		for (int i = 0; i < adjacent_to_element2.size(); i++)
+		{
+			int adjacent_index = adjacent_to_element2[i];
+			std::replace(p_adjacency_list[adjacent_index].begin(), p_adjacency_list[adjacent_index].end(), element2, element1);
+		}
+		std::swap(p_adjacency_list[element1], p_adjacency_list[element2]);
 	}
 
 private:

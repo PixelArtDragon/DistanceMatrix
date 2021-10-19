@@ -141,5 +141,26 @@ namespace UnitTests
 			dm.set_distance(2, 3, 1.0f);
 			Assert::AreEqual(0, (int)dm.get_shortest_path(0, 3).size());
 		}
+		TEST_METHOD(Swap)
+		{
+			DistanceMatrix dm(4);
+			dm.set_distance(0, 1, 1.0f);
+			dm.set_distance(1, 2, 2.0f);
+			dm.set_distance(2, 3, 3.0f);
+			dm.swap_vertices(1, 2);
+			Assert::AreEqual(1.0f, dm.get_calculated_distance(0, 2));
+			Assert::AreEqual(1.0f, dm.get_defined_distance(0, 2));
+			Assert::AreEqual(3.0f, dm.get_calculated_distance(1, 3));
+			Assert::AreEqual(3.0f, dm.get_defined_distance(1, 3));
+
+			Assert::AreEqual(6.0f, dm.get_calculated_distance(0, 3));
+
+			Assert::AreEqual(3.0f, dm.get_calculated_distance(0, 1));
+
+			Assert::IsTrue(std::find(dm.p_adjacency_list[0].begin(), dm.p_adjacency_list[0].end(), 2) != dm.p_adjacency_list[0].end());
+			Assert::IsTrue(std::find(dm.p_adjacency_list[0].begin(), dm.p_adjacency_list[0].end(), 1) == dm.p_adjacency_list[0].end());
+
+			Assert::AreEqual(std::numeric_limits<float>::infinity(), dm.get_defined_distance(0, 1));
+		}
 	};
 }
