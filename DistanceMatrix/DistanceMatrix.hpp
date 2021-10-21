@@ -69,30 +69,7 @@ public:
 		}
 		else
 		{
-			//No easy algorithm for updating distances, so use Floyd-Warshall to rebuild the matrix
-			
-			//k = 0 case, just enter the defined distances
-			for (int i = 0; i < p_num_elements - 1; i++)
-			{
-				for (int j = 0; j < p_num_elements; j++)
-				{
-					p_set_calculated_distance(i, j, get_defined_distance(i, j));
-				}
-			}
-			for (int k = 1; k < p_num_elements; k++)
-			{
-				for (int i = 0; i < p_num_elements - 1; i++)
-				{
-					for (int j = 0; j < p_num_elements; j++)
-					{
-						float bridge_distance = get_calculated_distance(i, k) + get_calculated_distance(k, j);
-						if (get_calculated_distance(i, j) > bridge_distance)
-						{
-							p_set_calculated_distance(i, j, bridge_distance);
-						}
-					}
-				}
-			}
+			p_fully_recalculate_distances();
 		}
 	}
 
@@ -238,6 +215,23 @@ public:
 		std::swap(p_adjacency_list[element1], p_adjacency_list[element2]);
 	}
 
+	//Removes all edges involving the given vertex
+	void reset_vertex(int vertex)
+	{
+		for (size_t i = 0; i < vertex; i++)
+		{
+			p_defined_distances[p_get_index(i, vertex)] = std::numeric_limits<float>::infinity();
+			p_remove_from_adjacency_list(i, vertex);
+		}
+		for (int i = vertex + 1; i < p_num_elements; i++)
+		{
+			p_defined_distances[p_get_index(vertex, i)] = std::numeric_limits<float>::infinity();
+			p_remove_from_adjacency_list(i, vertex);
+		}
+		p_adjacency_list[vertex].clear();
+		p_fully_recalculate_distances();
+	}
+
 private:
 	int p_num_elements;
 	std::vector<float> p_defined_distances;
@@ -246,6 +240,8 @@ private:
 
 
 	//Get index of element pair in the vectors
+	//Whenever possible, use element1 < element2 to avoid the need to swap
+	//Don't use when elements are the same, instead return default
 	int p_get_index(int element1, int element2) const
 	{
 		if (element1 > element2)
@@ -256,10 +252,6 @@ private:
 			element1 = element1 - element2;
 		}
 		int start = element1 * p_num_elements - element1 * (element1 + 1) / 2;
-		if (element1 == element2)
-		{
-			return start;
-		}
 		return start + element2 - element1 - 1;
 	}
 
@@ -267,6 +259,44 @@ private:
 	//Updates the calculated distance between the two elements
 	void p_set_calculated_distance(int element1, int element2, float distance)
 	{
+		//Calculated distance to same element is always 0
+		if (element1 == element2)
+		{
+			return;
+		}
 		p_calculated_distances[p_get_index(element1, element2)] = distance;
+	}
+
+	//Fully recalculates the distances using the Floyd-Warshall algorithm
+	void p_fully_recalculate_distances()
+	{
+		//k = 0 case, just enter the defined distances
+		for (int i = 0; i < p_num_elements - 1; i++)
+		{
+			for (int j = 0; j < p_num_elements; j++)
+			{
+				p_set_calculated_distance(i, j, get_defined_distance(i, j));
+			}
+		}
+		for (int k = 1; k < p_num_elements; k++)
+		{
+			for (int i = 0; i < p_num_elements - 1; i++)
+			{
+				for (int j = 0; j < p_num_elements; j++)
+				{
+					float bridge_distance = get_calculated_distance(i, k) + get_calculated_distance(k, j);
+					if (get_calculated_distance(i, j) > bridge_distance)
+					{
+						p_set_calculated_distance(i, j, bridge_distance);
+					}
+				}
+			}
+		}
+	}
+
+	//Removes the element from the adjacency list at the given index
+	void p_remove_from_adjacency_list(int adjacency_list_index, int element)
+	{
+		p_adjacency_list[adjacency_list_index].erase(std::remove(p_adjacency_list[adjacency_list_index].begin(), p_adjacency_list[adjacency_list_index].end(), element));
 	}
 };

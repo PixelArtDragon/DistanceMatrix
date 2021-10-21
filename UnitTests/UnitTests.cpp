@@ -162,5 +162,15 @@ namespace UnitTests
 
 			Assert::AreEqual(std::numeric_limits<float>::infinity(), dm.get_defined_distance(0, 1));
 		}
+		TEST_METHOD(ResettingVertex)
+		{
+			DistanceMatrix dm(3);
+			dm.set_distance(0, 1, 1.0f);
+			dm.set_distance(1, 2, 2.0f);
+			dm.reset_vertex(1);
+			Assert::AreEqual(std::numeric_limits<float>::infinity(), dm.get_defined_distance(0, 1));
+			Assert::AreEqual(std::numeric_limits<float>::infinity(), dm.get_calculated_distance(0, 2));
+			Assert::IsTrue(std::find(dm.p_adjacency_list[0].begin(), dm.p_adjacency_list[0].end(), 1) == dm.p_adjacency_list[0].end());
+		}
 	};
 }
